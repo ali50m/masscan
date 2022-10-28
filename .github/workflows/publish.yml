@@ -1,0 +1,41 @@
+# https://github.com/nilsoncore/snake/blob/003093bae4bcd7126421f6800c61415215b474b6/libs/tracy/.github/workflows/msvc.yml
+
+name: publish
+
+on:
+  push:
+    tags:
+# git tag v1.0
+# git push --tags
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+'
+
+  workflow_dispatch:
+
+env:
+# the PlatformToolset for Visual Studio Enterprise 2022 is v143
+  VsVersion: v143
+  ProjectPath: .\vs10\masscan.vcxproj
+
+jobs:
+  build:
+# https://github.com/actions/runner-images
+    runs-on: windows-2022
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: microsoft/setup-msbuild@v1.1
+
+    - name: build x86
+      run: |
+        msbuild ${{env.ProjectPath}} /property:Configuration=Release /property:Platform=Win32 /property:PlatformToolset=${{env.VsVersion}} 
+        move bin\masscan.exe bin\masscan.x86.exe
+    
+    - name: build x64
+      run: |
+        msbuild ${{env.ProjectPath}} /property:Configuration=Release /property:Platform=x64 /property:PlatformToolset=${{env.VsVersion}} 
+
+    - name: GH Release
+      uses: softprops/action-gh-release@v0.1.14
+      with:
+        files: .\bin\*.exe
